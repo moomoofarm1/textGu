@@ -403,6 +403,7 @@ textEmbedRawLayers <- function(texts,
     }
   }
 
+  # TODO: ???? -2:-1, only for "bert-base-uncased"
   if (layers[1] < 0) {
     n <- textModelLayers("bert-base-uncased")
     layers <- 1 + n + layers
