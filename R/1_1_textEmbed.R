@@ -147,8 +147,8 @@ sortingLayers <- function(x,
                           layers = layers,
                           return_tokens = return_tokens) {
   partNo <- length(x[[1]][[1]][[1]][[1]])
-  step1 <- as.vector(unlist(x[[1]]))
-  step2 <- tibble::as_tibble(unlist(step1[[1]]))
+  step1 <- as.vector(unlist(x[[1]], recursive = FALSE))
+  step2 <- tibble::as_tibble(unlist(step1[[1]], recursive = FALSE))
   step3 <- tibble::as_tibble(matrix(step1, nrow = partNo, byrow = TRUE))
   if (return_tokens){
     return (dplyr::bind_cols(step2, step3))
