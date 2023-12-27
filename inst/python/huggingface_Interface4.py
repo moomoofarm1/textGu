@@ -19,7 +19,7 @@ def dataFrame_encoding(df, coder1 = 'utf-8'):
     ----------
     df : pandas dataframe
         The input for recoding
-    coder : str
+    coder1 : str
         Coder to recoding with a default of "utf-8"
 
     Returns:
