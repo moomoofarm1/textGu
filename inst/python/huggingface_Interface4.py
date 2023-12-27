@@ -1,6 +1,7 @@
 # Paths in python to task_finetune is set in R function
 from task_finetune import main as task_finetuner
 from run_mlm import main as mlm_finetuner
+import pandas as pd
 import json
 
 def set_tokenizer_parallelism(tokenizer_parallelism):
@@ -9,6 +10,26 @@ def set_tokenizer_parallelism(tokenizer_parallelism):
     else:
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+
+def dataFrame_encoding(df, coder1 = "utf-8"):
+    """
+    Transform the encoding of string columns into a specific coding.
+
+    Parameters:
+    ----------
+    df : pandas dataframe
+        The input for recoding
+    coder : str
+        Coder to recoding with a default of "utf-8"
+
+    Returns:
+    ----------
+    Recoded pandas dataframe
+    """
+    for col in df.columns:
+        if df[col].dtype == 'object':  # if column is of string type
+            df[col] = df[col].apply(lambda x: x.encode(coder1) if pd.notnull(x) else "".encode(coder1))
+    return df
 
 def hgTransformerMLM(json_path, text_df_train, text_df_val, text_df_test, **kwargs):
     """
@@ -30,6 +51,11 @@ def hgTransformerMLM(json_path, text_df_train, text_df_val, text_df_test, **kwar
     None
     """
     args = json.load(open(json_path))
+
+    text_df_train = dataFrame_encoding(text_df_train)
+    text_df_val = dataFrame_encoding(text_df_val)
+    text_df_test = dataFrame_encoding(text_df_test)
+    
     return mlm_finetuner(args, text_df_train, text_df_val, text_df_test, **kwargs)
 
 
