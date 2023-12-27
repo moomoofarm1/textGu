@@ -191,7 +191,7 @@ def main(args, text_outcome_df, text_outcome_df_val, text_outcome_df_test, is_re
     for i in kwargs:
         if i in args_dict: args_dict[i] = kwargs[i]
 
-    model_args, data_args, training_args = parser.parse_dict(args = args_dict)
+    model_args, data_args, training_args = parser.parse_dict(args = args_dict, allow_extra_keys = TRUE)
     
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
