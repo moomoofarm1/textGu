@@ -57,23 +57,23 @@ textrpp_install <- function(conda = "auto",
   if (rpp_version[[1]] == "rpp_version_system_specific_defaults") {
     if (is_osx() | is_linux()) {
       rpp_version <- c("torch==2.0.0",
-                       "transformers==4.19.2",
-                       "numpy",
-                       "pandas",
+                       "transformers==4.36.0",
+                       "numpy==1.25.2",
+                       "pandas==2.0.3",
                        "nltk==3.6.7",
-                       "scikit-learn",
+                       "scikit-learn==1.3.0",
                        "datasets==2.9.0",
-                       "evaluate")
+                       "evaluate==0.4.0")
     }
     if (is_windows()) {
       rpp_version <- c("torch==2.0.0",
-                       "transformers==4.19.2",
-                       "numpy",
-                       "pandas",
+                       "transformers==4.36.0",
+                       "numpy==1.25.2",
+                       "pandas==2.0.3",
                        "nltk==3.6.7",
-                       "scikit-learn",
+                       "scikit-learn==1.3.0",
                        "datasets==2.9.0",
-                       "evaluate")
+                       "evaluate==0.4.0")
     }
   }
 

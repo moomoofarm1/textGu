@@ -336,3 +336,203 @@ path_exist_download_files <- function(wanted_file) {
   return(path_to_file)
 }
 
+
+######################################                          ###################################### 
+###################################### Implicit motives section ###################################### 
+######################################                          ###################################### 
+
+#' Returns a tibble with values relevant for calculating implicit motives 
+#' @param texts Texts to predict
+#' @param user_id A column with user ids. 
+#' @param predicted_scores2 Predictions from textPredict. 
+#' @return Returns a tibble with values relevant for calculating implicit motives 
+#' @noRd
+implicit_motives <- function(texts, user_id, predicted_scores2){
+  
+  # Create a table with the number of sentences per user 
+  table_uniques2 <- table(user_id[1:dim(predicted_scores2)[1]])
+  num_persons <- length(table_uniques2)
+  
+  # Define variables 
+  user_id_column <- c()
+  current <- 0
+  # Create user_id_column
+  for (i in 1:num_persons) {
+    current <- current + table_uniques2[[i]]
+    user_id_column <- c(user_id_column, user_id[current])
+  }
+  
+  # Create dataframe 
+  summations <- data.frame(
+    OUTCOME_USER_SUM_CLASS = numeric(num_persons),
+    OUTCOME_USER_SUM_PROB = numeric(num_persons),
+    wc_person_per_1000 = numeric(num_persons),
+    user_ids = numeric(num_persons)
+  )
+  
+  # Summarize classes and probabilities (for the first row)
+  summations[1, c("OUTCOME_USER_SUM_CLASS", "OUTCOME_USER_SUM_PROB")] <- c(
+    OUTCOME_USER_SUM_CLASS = sum(as.numeric(predicted_scores2[[1]][1:table_uniques2[[1]]]), na.rm = TRUE),
+    OUTCOME_USER_SUM_PROB = sum(as.numeric(predicted_scores2[[3]][1:table_uniques2[[1]]]), na.rm = TRUE)
+  )
+  
+  # Summarize classes and probabilities (for the rest of the rows)
+  for (user_ids in 2:length(table_uniques2)) {
+    start_idx <- sum(table_uniques2[1:(user_ids - 1)]) + 1
+    end_idx <- sum(table_uniques2[1:user_ids])
+    
+    summations[user_ids, c("OUTCOME_USER_SUM_CLASS", "OUTCOME_USER_SUM_PROB")] <- c(
+      OUTCOME_USER_SUM_CLASS = sum(as.numeric(predicted_scores2[[1]][start_idx:end_idx]), na.rm = TRUE),
+      OUTCOME_USER_SUM_PROB = sum(as.numeric(predicted_scores2[[3]][start_idx:end_idx]), na.rm = TRUE)
+    )
+  }
+  
+  # Calculate wc_person_per_1000 (for the first row)
+  summations[1, "wc_person_per_1000"] <- sum(lengths(strsplit(texts[1:table_uniques2[[1]]], ' ')), na.rm = TRUE) / 1000
+  
+  # Calculate wc_person_per_1000 (for the rest of the rows)
+  for (user_ids in 2:length(table_uniques2)) {
+    # must start on index of the next user, therefore +1
+    start_idx <- sum(table_uniques2[1:(user_ids - 1)]) + 1
+    end_idx <- sum(table_uniques2[1:user_ids])
+    
+    summations[user_ids, "wc_person_per_1000"] <- sum(lengths(strsplit(texts[start_idx:end_idx], ' ')), na.rm = TRUE) / 1000
+  }
+  
+  summations["user_ids"] <- user_id_column
+  return(summations)
+}
+
+#' implicit_motives_pred returns residuals from robust linear regression. 
+#' @param sqrt_implicit_motives Tibble returned from function implicit_motives. 
+#' @return implicit_motives_pred returns residuals from robust linear regression. 
+#' @noRd
+implicit_motives_pred <- function(sqrt_implicit_motives){
+  #square root transform
+  sqrt_implicit_motives[1:3] <- sqrt(sqrt_implicit_motives[1:3])
+  # For OUTCOME_USER_SUM_PROB
+  lm.OUTCOME_USER_SUM_PROB <- stats::lm(OUTCOME_USER_SUM_PROB  ~ wc_person_per_1000, data = sqrt_implicit_motives)
+  OUTCOME_USER_SUM_PROB.residual1 <- resid(lm.OUTCOME_USER_SUM_PROB)
+  OUTCOME_USER_SUM_PROB.residual1.z <- scale(OUTCOME_USER_SUM_PROB.residual1)
+  
+  # For OUTCOME_USER_SUM_CLASS
+  lm.OUTCOME_USER_SUM_CLASS <- stats::lm(OUTCOME_USER_SUM_CLASS  ~ wc_person_per_1000, data = sqrt_implicit_motives)
+  OUTCOME_USER_SUM_CLASS.residual1 <- resid(lm.OUTCOME_USER_SUM_CLASS)
+  OUTCOME_USER_SUM_CLASS.residual1.z <- scale(OUTCOME_USER_SUM_CLASS.residual1)
+  
+  # Insert residuals into a tibble
+  implicit_motives_pred <- tibble::tibble(
+    user_id = sqrt_implicit_motives$user_id,
+    person_prob = as.vector(OUTCOME_USER_SUM_PROB.residual1.z),
+    person_class = as.vector(OUTCOME_USER_SUM_CLASS.residual1.z)
+  )
+  
+  return(implicit_motives_pred)
+}
+
+#' Separates text sentence-wise and adds additional sentences to new rows with correpsonding user_id:s. 
+#' @param df Dataframe with two columns, user_id and texts. 
+#' @return Returns a tibble with user_id:s and texts, where each user_id is matched to an individual sentence. 
+#' @noRd
+update_user_and_texts <- function(df) {
+  updated_user_id <- integer()
+  updated_texts <- character()
+  
+  for (i in seq_along(df$user_id)) {
+    # split sentences on ".", "!", or "?"
+    sentences <- stringi::stri_split(df$texts[i], regex = "[.!?]", simplify = TRUE)
+    
+    # remove any empty sentences
+    sentences <- sentences[sentences != ""]
+    
+    # if more than one sentence, repeat user_id and create a vector of updated texts
+    current_user_id <- rep(df$user_id[i], length(sentences))
+    current_texts <- sentences
+    
+    # check if the "next" sentence should be split based on its length (if it exceeds two words)
+    split_indices <- sapply(current_texts, function(sentence) {
+      length(unlist(stringi::stri_split(sentence, regex = "\\s+"))) > 2
+    })
+    
+    # append the updated user_id and texts to the results
+    updated_user_id <- c(updated_user_id, rep(df$user_id[i], sum(split_indices)))
+    updated_texts <- c(updated_texts, current_texts[split_indices])
+  }
+  
+  updated_df <- data.frame(user_id = updated_user_id, texts = updated_texts)
+  
+  # since empty rows were deleted, any extra must now be added again. 
+  missing_rows <- setdiff(df$user_id, updated_df$user_id)
+  if (length(missing_rows) > 0) {
+    updated_df <- rbind(updated_df, data.frame(user_id = missing_rows, texts = ""))
+  }
+  
+  return(updated_df)
+}
+
+#' Wrapper function that prepares the data and returns a list with predictions, class residuals and probability residuals. 
+#' @param model_reference Reference to implicit motive model, either github URL or file-path. 
+#' @param user_id A column with user ids. 
+#' @param predicted_scores2 Predictions from textPredict() function. 
+#' @param texts Texts to predict from textPredict() function. 
+#' @return Returns a tibble with values relevant for calculating implicit motives 
+#' @noRd
+implicit_motives_results <- function(model_reference, 
+                                     user_id, 
+                                     predicted_scores2, 
+                                     texts){
+  
+  #### Make sure there is just one sentence per user_id ####
+  
+  # prepare dataframe for update_user_and_texts function
+  id_and_texts <- data.frame(user_id = user_id, texts = texts)
+  
+  # correct for multiple sentences per row. 
+  update_user_and_texts <- update_user_and_texts(id_and_texts)
+  
+  # update user_id
+  user_id = update_user_and_texts$user_id
+  # update texts
+  texts = update_user_and_texts$texts
+  
+  #### Assign correct column name #### 
+  lower_case_model <- tolower(model_reference)
+  
+  if (grepl("power", lower_case_model)){
+    column_name <- "power"
+  }
+  else if (grepl("affiliation", lower_case_model)){
+    column_name <- "affiliation"
+  }
+  else if (grepl("achievement", lower_case_model)){
+    column_name <- "achievement"
+  }
+  else if (model_reference == "achievment" | model_reference == "power" | model_reference == "affiliation" ){
+    column_name <- model_reference
+  }
+  
+  # Retrieve Data
+  implicit_motives <- implicit_motives(texts, user_id, predicted_scores2)
+  
+  # Predict 
+  predicted <- implicit_motives_pred(implicit_motives)
+  
+  # Full column name
+  class_col_name <- paste0(column_name, "_class")
+  
+  # Change column name in predicted_scores2 
+  colnames(predicted_scores2)[1] <- class_col_name
+  
+  # Change from df to tibble 
+  predicted_scores2 <- tibble::as_tibble(predicted_scores2)
+  
+  # Summarize all predictions
+  summary_list <- list(sentence_predictions = predicted_scores2, person_predictions = predicted) 
+  
+  # Display message to user
+  cat(colourise("Predictions of implicit motives are ready!", fg = "green"))
+  cat("\n")
+  
+  return(summary_list)
+}
+

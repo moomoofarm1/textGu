@@ -2,14 +2,26 @@
 % Please edit documentation in R/2_4_textPredict.R
 \name{textPredict}
 \alias{textPredict}
-\title{Predict scores or classification from, e.g., textTrain.}
+\title{Trained models created by e.g., textTrain() or strored on e.g., github can be used to predict new scores or classes from embeddings or text using textPredict.}
 \usage{
 textPredict(
-  model_info,
-  word_embeddings,
+  model_info = NULL,
+  word_embeddings = NULL,
   x_append = NULL,
   type = NULL,
   dim_names = TRUE,
+  texts = NULL,
+  model_platform = "github",
+  model_reference =
+    "https://github.com/CarlViggo/pretrained-models/raw/main/trained_hils_model.RDS",
+  save_model = FALSE,
+  model_name = NULL,
+  threshold = NULL,
+  show_prob = FALSE,
+  show_texts = FALSE,
+  device = "cpu",
+  user_id = NULL,
+  story_id = NULL,
   ...
 )
 }
@@ -17,29 +29,100 @@ textPredict(
 \item{model_info}{(model object) Model info (e.g., saved output from textTrain,
 textTrainRegression or textRandomForest).}
 
-\item{word_embeddings}{(tibble) Word embeddings}
+\item{word_embeddings}{(tibble) Embeddings from e.g., textEmbed(). If you're using a premade model, then submit either texts or word_embeddings (default = NULL).}
 
 \item{x_append}{(tibble) Variables to be appended after the word embeddings (x).}
 
-\item{type}{(string) Type of prediction; e.g., "prob", "class".}
+\item{type}{(character) Defines the type of prediction when implementing logistic models. Either probabilities or
+classifications are returned (default = "class". For probabilities use "prob").}
 
 \item{dim_names}{(boolean) Account for specific dimension names from textEmbed()
 (rather than generic names including Dim1, Dim2 etc.). If FALSE the models need to have been trained on
 word embeddings created with dim_names FALSE, so that embeddings were only called Dim1, Dim2 etc.}
 
+\item{texts}{(character) Text to predict. If this argument is specified, then arguments "word_embeddings" and "premade embeddings" cannot be defined (default = NULL).}
+
+\item{model_platform}{(character) Either "github" or "local" (default = "github").}
+
+\item{model_reference}{(character) Link to github-model (default = "https://github.com/CarlViggo/pretrained_swls_model/raw/main/trained_github_model_logistic.RDS",
+a model that predicts harmony in life score).}
+
+\item{save_model}{(boolean) If set to true, the model will be saved to the work-directory (default = FALSE). If TRUE, then argument "model_name" must be defined.}
+
+\item{model_name}{(character) Optional. If the 'save_model' argument is set to TRUE and you wish to assign a custom name to your model, 
+provide a file path along with the desired filename, for example, 'C:/Users/Name/Models/linear_model.RDS' (default is NULL). If this is not defined 
+but 'save_model' is set to TRUE, the model will be saved as 'imported_model.RDS'.}
+
+\item{threshold}{(numeric) Determine threshold if you are using a logistic model (default = 0.5).}
+
+\item{show_prob}{(boolean) If you are using a logistic model and show_prob is set to TRUE, then both classification and the underlying probabilities will be}
+
+\item{show_texts}{(boolean) Show texts together with predictions (default = FALSE).}
+
+\item{device}{Name of device to use: 'cpu', 'gpu', 'gpu:k' or 'mps'/'mps:k' for MacOS, where k is a
+specific device number such as 'mps:1'.}
+
+\item{user_id}{(list) user_id associates sentences with their writers. User_id must be defined when calculating implicit motives. (default = NULL)
+shown (default = FALSE).}
+
+\item{story_id}{(list) story_id associates sentences with their stories. If story_id is defined, then the mean of the current and previous 
+word-embedding per story-id will be calculated. (default = NULL)}
+
 \item{...}{Setting from stats::predict can be called.}
 }
 \value{
-Predicted scores from word embeddings.
+Predictions from word-embedding or text input.
 }
 \description{
-Predict scores or classification from, e.g., textTrain.
+Trained models created by e.g., textTrain() or strored on e.g., github can be used to predict new scores or classes from embeddings or text using textPredict.
 }
 \examples{
-word_embeddings <- word_embeddings_4
-ratings_data <- Language_based_assessment_data_8
+
+\dontrun{
+
+# Text data from Language_based_assessment_data_8
+text_to_predict = "I am not in harmony in my life as much as I would like to be." 
+
+# Example 1: (predict using embeddings and local model)
+prediction1 <- textPredict(trained_model, 
+                           word_embeddings_4$texts$satisfactiontexts)
+
+# Example 2: (predict using a pretrained github model)
+prediction2 <- textPredict(texts = text_to_predict)
+
+# Example 4: (predict using a pretrained github model and save the model locally)
+prediction3 <- textPredict(texts = text_to_predict, 
+                            model_platform = "github", 
+                            model_reference = "https://github.com/CarlViggo/pretrained-models/raw/main/trained_hils_model.RDS",
+                            save_model = TRUE)
+                           
+# Example 5: (predict using a pretrained logistic github model and return probabilities and classifications simultaneously)
+prediction4 <- textPredict(texts = text_to_predict, 
+                            model_reference = "https://github.com/CarlViggo/pretrained-models/raw/main/trained_github_model_logistic.RDS",
+                            type = "class",
+                            threshold = 0.7, 
+                            show_prob = TRUE)
+                       
+# Example 6: (Automatic implicit motive coding)
+schone_training <- read.RDS("schone_training.rds")
+
+implicit_motives <- textPredict(texts = schone_training$text,
+                                 model_reference = "power",
+                                 user_id = schone_training$participant_id, 
+                                 story_id = schone_training$story_id) 
+}
+
+\dontrun{
+#Examine the correlation between the predicted values and
+#the Satisfaction with life scale score (pre-included in text).
+
+psych::corr.test(
+ predictions1$word_embeddings__ypred,
+ Language_based_assessment_data_8$swlstotal
+) 
+}
 }
 \seealso{
-see \code{\link{textTrain}} \code{\link{textTrainLists}}
-\code{\link{textTrainRandomForest}}
+See \code{\link{textTrain}}, \code{\link{textTrainLists}} and
+\code{\link{textTrainRandomForest}}.
 }

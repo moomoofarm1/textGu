@@ -1,4 +1,3 @@
-
 #' Find encoding type of variable and then set it to UTF-8.
 #' @param x Tibble including both text and numeric variables.
 #' @return all character variables in UTF-8 format.
@@ -320,44 +319,50 @@ textTokenize <- function(texts,
 }
 
 #' Extract layers of hidden states (word embeddings) for all character variables in a given dataframe.
-#' @param texts A character variable or a tibble/dataframe with at least one character variable.
-#' @param model Character string specifying pre-trained language model (default 'bert-base-uncased').
+#' @param texts A character variable or a tibble with at least one character variable.
+#' @param model (character) Character string specifying pre-trained language model (default = 'bert-base-uncased').
 #'  For full list of options see pretrained models at
 #'  \href{https://huggingface.co/transformers/pretrained_models.html}{HuggingFace}.
 #'  For example use "bert-base-multilingual-cased", "openai-gpt",
 #' "gpt2", "ctrl", "transfo-xl-wt103", "xlnet-base-cased", "xlm-mlm-enfr-1024", "distilbert-base-cased",
 #' "roberta-base", or "xlm-roberta-base". Only load models that you trust from HuggingFace; loading a
 #'  malicious model can execute arbitrary code on your computer).
-#' @param layers (string or numeric) Specify the layers that should be extracted
+#' @param layers (character or numeric) Specify the layers that should be extracted
 #' (default -2, which give the second to last layer). It is more efficient to only extract the
 #' layers that you need (e.g., 11). You can also extract several (e.g., 11:12),
 #' or all by setting this parameter to "all". Layer 0 is the decontextualized input layer
 #' (i.e., not comprising hidden states) and thus should normally not be used. These layers can then
 #'  be aggregated in the textEmbedLayerAggregation function.
-#' @param return_tokens If TRUE, provide the tokens used in the specified transformer model.
-#' @param word_type_embeddings (boolean) Wether to provide embeddings for each word/token type.
-#' @param decontextualize (boolean) Wether to dectonextualise embeddings (i.e., embedding one word at a time).
+#' @param return_tokens (boolean) If TRUE, provide the tokens used in the specified transformer model. (default = TRUE)
+#' @param word_type_embeddings (boolean) Wether to provide embeddings for each word/token type. (default = FALSE)
+#' @param decontextualize (boolean) Wether to dectonextualise embeddings (i.e., embedding one word at a time). (default = TRUE)
 #' @param keep_token_embeddings (boolean) Whether to keep token level embeddings in the output
-#' (when using word_types aggregation)
-#' @param device Name of device to use: 'cpu', 'gpu', 'gpu:k' or 'mps'/'mps:k' for MacOS, where k is a
-#' specific device number.
-#' @param tokenizer_parallelism If TRUE this will turn on tokenizer parallelism. Default FALSE.
+#' (when using word_types aggregation). (default= TRUE)
+#' @param device (character) Name of device to use: 'cpu', 'gpu', 'gpu:k' or 'mps'/'mps:k' for MacOS, where k is a
+#' specific device number. (default = "cpu")
+#' @param tokenizer_parallelism (boolean) If TRUE this will turn on tokenizer parallelism. (default = FALSE).
 #' @param model_max_length The maximum length (in number of tokens) for the inputs to the transformer model
 #' (default the value stored for the associated model).
 #' @param max_token_to_sentence (numeric) Maximum number of tokens in a string to handle before switching to embedding
-#' text sentence by sentence.
-#' @param logging_level Set the logging level. Default: "warning".
+#' text sentence by sentence. (default= 4)
+#' @param logging_level (character) Set the logging level. (default ="error")
 #' Options (ordered from less logging to more logging): critical, error, warning, info, debug
-#' @param sort (boolean) If TRUE sort the output to tidy format.
-#' @return Returns hiddenstates/layers that can be 1. Can return three different outputA tibble with tokens,
-#' column specifying layer and word embeddings. Note that layer 0 is the input embedding to the transformer,
-#' and should normally not be used.
+#' @param sort (boolean) If TRUE sort the output to tidy format. (default = TRUE)
+#' @return The textEmbedRawLayers() takes text as input, and returns the hidden states for each token of the text,
+#' including the [CLS] and the [SEP].
+#' Note that layer 0 is the input embedding to the transformer, and should normally not be used.
 #' @examples
-#' \donttest{
-#' # texts <- Language_based_assessment_data_8[1:2, 1:2]
-#' # word_embeddings_with_layers <- textEmbedRawLayers(texts, layers = 11:12)
+#' # Get hidden states of layer 11 and 12 for "I am fine".
+#' \dontrun{
+#' imf_embeddings_11_12 <- textEmbedRawLayers(
+#'                                   "I am fine",
+#'                                   layers = 11:12
+#' )
+#'
+#' # Show hidden states of layer 11 and 12.
+#' imf_embeddings_11_12
 #' }
-#' @seealso see \code{\link{textEmbedLayerAggregation}} and \code{\link{textEmbed}}
+#' @seealso See \code{\link{textEmbedLayerAggregation}} and \code{\link{textEmbed}}.
 #' @importFrom reticulate source_python
 #' @importFrom dplyr %>% bind_rows group_split
 #' @importFrom tibble tibble as_tibble
@@ -616,32 +621,41 @@ textEmbedRawLayers <- function(texts,
 }
 
 
-#' Select and aggregate layers of hidden states to form a word embeddings.
-#' @param word_embeddings_layers Layers outputted from textEmbedRawLayers.
-#' @param layers The numbers of the layers to be aggregated
+#' Select and aggregate layers of hidden states to form a word embedding.
+#' @param word_embeddings_layers Layers returned by the textEmbedRawLayers function.
+#' @param layers (character or numeric) The numbers of the layers to be aggregated
 #' (e.g., c(11:12) to aggregate the eleventh and twelfth).
 #' Note that layer 0 is the input embedding to the transformer, and should normally not be used.
-#' Selecting 'all' thus removes layer 0.
-#' @param aggregation_from_layers_to_tokens Method to carry out the aggregation among the layers for each word/token,
+#' Selecting 'all' thus removes layer 0 (default = "all")
+#' @param aggregation_from_layers_to_tokens (character) Method to carry out the aggregation among the layers for each word/token,
 #' including "min", "max" and "mean" which takes the minimum, maximum or mean across each column;
-#' or "concatenate", which links together each layer of the word embedding to one long row. Default is "concatenate"
-#' @param aggregation_from_tokens_to_texts Method to carry out the aggregation among the word embeddings
+#' or "concatenate", which links together each layer of the word embedding to one long row (default = "concatenate").
+#' @param aggregation_from_tokens_to_texts (character) Method to carry out the aggregation among the word embeddings
 #' for the words/tokens, including "min", "max" and "mean" which takes the minimum, maximum or mean across each column;
-#' or "concatenate", which links together each layer of the word embedding to one long row.
-#' @param return_tokens If TRUE, provide the tokens used in the specified transformer model.
-#' @param tokens_select Option to only select embeddings linked to specific tokens
+#' or "concatenate", which links together each layer of the word embedding to one long row (default = "mean").
+#' @param return_tokens (boolean) If TRUE, provide the tokens used in the specified transformer model (default = FALSE).
+#' @param tokens_select (character) Option to only select embeddings linked to specific tokens
 #' such as "[CLS]" and "[SEP]" (default NULL).
-#' @param tokens_deselect Option to deselect embeddings linked to specific tokens
+#' @param tokens_deselect (character) Option to deselect embeddings linked to specific tokens
 #' such as "[CLS]" and "[SEP]" (default NULL).
 #' @return A tibble with word embeddings. Note that layer 0 is the input embedding to
 #' the transformer, which is normally not used.
 #' @examples
-#' \donttest{
-#' # word_embeddings_layers <- textEmbedRawLayers(Language_based_assessment_data_8$harmonywords[1],
-#' # layers = 11:12)
-#' # word_embeddings <- textEmbedLayerAggregation(word_embeddings_layers$context, layers = 11)
+#' #Aggregate the hidden states from textEmbedRawLayers
+#' #to create a word embedding representing the entire text.
+#' #This is achieved by concatenating layer 11 and 12.
+#' \dontrun{
+#' word_embedding <- textEmbedLayerAggregation(
+#'                     imf_embeddings_11_12$context_tokens,
+#'                     layers = 11:12,
+#'                     aggregation_from_layers_to_tokens = "concatenate",
+#'                     aggregation_from_tokens_to_texts = "mean"
+#' )
+#'
+#' #Examine word_embedding
+#' word_embedding
 #' }
-#' @seealso see \code{\link{textEmbedRawLayers}} and \code{\link{textEmbed}}
+#' @seealso See \code{\link{textEmbedRawLayers}} and \code{\link{textEmbed}}.
 #' @importFrom dplyr %>% bind_rows
 #' @export
 textEmbedLayerAggregation <- function(word_embeddings_layers,
@@ -802,7 +816,112 @@ textEmbedLayerAggregation <- function(word_embeddings_layers,
 }
 
 
+#' Generate_placement_vector input from textEmbedRawLayers and inserts NA-placeholder vectors for NA values. 
+#' @param raw_layers Layers returned by the textEmbedRawLayers function with NA values.
+#' @return Layers returned by the textEmbedRawLayers with inserted NA-placeholder vectors.  
+#' @noRd
+generate_placement_vector <- function(raw_layers, texts) {
+  
+  # Extract column name, if there is one. 
+  column_name <- colnames(texts)
+  
+  context_tokens <- NULL
+  
+  
+  if (!is.null(raw_layers$context_tokens$value)) {
+    context_tokens <- raw_layers$context_tokens$value
+  }
+  # If raw_layers$context_tokens$value is NULL, check if raw_layers$context_tokens$texts is not NULL and use it
+  
+  if (!is.null(raw_layers$context_tokens$texts)) {
+    context_tokens <- raw_layers$context_tokens$texts
+  }
+  
+  # Try with column name
+  if (!is.null(column_name)) {
+    context_tokens <- raw_layers$context_tokens[[column_name]]
+  }
+  
+  # Check if raw_layers$context_tokens$value is not NULL, and use it
+  if (is.null(context_tokens)) {
+    stop("Neither raw_layers$context_tokens$value nor raw_layers$context_tokens$texts found or both are NULL.")
+  }
+  
+  # Loop through the hidden states
+  for (i in 1:length(context_tokens)) {
+    token_embedding <- context_tokens[[i]]
+    
+    # Find the corresponding token of each hidden state
+    elements <- context_tokens[[i]][1]
+    
+    # Check if "na" or "NA" is represented as a token
+    if (any(sapply(elements, function(element) "na" %in% element)) |
+        any(sapply(elements, function(element) "NA" %in% element))) {
+      # If so, then check for "NA" or "na" in the token-embedding
+      if (any(grepl("na", token_embedding$tokens, ignore.case = TRUE)) |
+          any(grepl("NA", token_embedding$tokens, ignore.case = TRUE))) {
+        # Store the dimensions of the token-embedding with NA:s
+        dimensions <- dim(context_tokens[[i]])
+      }
+    }
+  }
+  
+  # Create a placeholder tibble with NA values of the same shape as the original token embedding
+  template_na <- as_tibble(matrix(NA, nrow = dimensions[1], ncol = dimensions[2] - 2))
+  colnames(template_na) <- c("tokens", paste0("Dim", 1:(dimensions[2] - 3)))
+  
+  # Create a list to store the modified embeddings
+  modified_embeddings <- list()
+  
+  # Iterate over each context token in the original embedding list
+  for (i in 1:length(context_tokens)) {
+    token_embedding <- context_tokens[[i]]
+    elements <- context_tokens[[i]][1]
+    
+    # Check if "na" is present in any element of the list
+    if (any(sapply(elements, function(element) "na" %in% element)) |
+        any(sapply(elements, function(element) "NA" %in% element))) {
+      # If so, then check for "na" in the token-embedding
+      if (any(grepl("na", token_embedding$tokens, ignore.case = TRUE)) |
+          any(grepl("NA", token_embedding$tokens, ignore.case = TRUE))) {
+        # Replace only the numerical columns with NA values while keeping the first three columns
+        token_embedding[, -(1:3)] <- NA  # Exclude the first three columns
+      }
+    }
+    modified_embeddings[[i]] <- token_embedding
+  }
+  
+  # Replace the original layers with the modified
+  if (!is.null(raw_layers$context_tokens$value)) {
+    raw_layers$context_tokens$value <- modified_embeddings
+  }
+  if (!is.null(raw_layers$context_tokens$texts)) {
+    raw_layers$context_tokens$texts <- modified_embeddings
+  }
+  if (!is.null(raw_layers$context_tokens[[column_name]])) {
+    raw_layers$context_tokens[[column_name]] <- modified_embeddings
+  }
+  
+  return(raw_layers)
+}
 
+
+#texts = x
+#model = "bert-base-uncased"
+#layers = -2
+#dim_name = TRUE
+#aggregation_from_layers_to_tokens = "concatenate"
+#aggregation_from_tokens_to_texts = "mean"
+#aggregation_from_tokens_to_word_types = "mean"
+#keep_token_embeddings = TRUE
+#tokens_select = NULL
+#tokens_deselect = NULL
+#decontextualize = TRUE
+#model_max_length = NULL
+#max_token_to_sentence = 4
+#tokenizer_parallelism = FALSE
+#device = "cpu"
+#logging_level = "error"
 
 #' Extract layers and aggregate them to word embeddings, for all character variables in a given dataframe.
 #' @param texts A character variable or a tibble/dataframe with at least one character variable.
@@ -819,7 +938,7 @@ textEmbedLayerAggregation <- function(word_embeddings_layers,
 #' to "all". Layer 0 is the decontextualized input layer (i.e., not comprising hidden states) and
 #'  thus should normally not be used. These layers can then be aggregated in the textEmbedLayerAggregation
 #'  function.
-#' @param dim_name Boolean, if TRUE append the variable name after all variable-names in the output.
+#' @param dim_name (boolean) If TRUE append the variable name after all variable-names in the output.
 #' (This differentiates between word embedding dimension names; e.g., Dim1_text_variable_name).
 #' see \code{\link{textDimName}} to change names back and forth.
 #' @param aggregation_from_layers_to_tokens (string) Aggregated layers of each token. Method to aggregate the
@@ -849,21 +968,35 @@ textEmbedLayerAggregation <- function(word_embeddings_layers,
 #' Options (ordered from less logging to more logging): critical, error, warning, info, debug
 #' @param ... settings from textEmbedRawLayers().
 #' @return A tibble with tokens, a column for layer identifier and word embeddings.
-#' Note that layer 0 is the input embedding to the transformer
+#' Note that layer 0 is the input embedding to the transformer.
 #' @examples
-#' \donttest{
-#' # word_embeddings <- textEmbed(Language_based_assessment_data_8[1:2, 1:2],
-#' #                             layers = 10:11,
-#' #                             aggregation_from_layers_to_tokens = "concatenate",
-#' #                             aggregation_from_tokens_to_texts = "mean",
-#' #                             aggregation_from_tokens_to_word_types = "mean")
-#' ## Show information about how the embeddings were constructed
-#' # comment(word_embeddings$texts$satisfactiontexts)
-#' # comment(word_embeddings$word_types)
-#' # comment(word_embeddings$tokens$satisfactiontexts)
+#' # Automatically transforms the characters in the example dataset:
+#' # Language_based_assessment_data_8 (included in text-package), to embeddings.
+#' \dontrun{
+#' word_embeddings <- textEmbed(Language_based_assessment_data_8[1:2, 1:2],
+#'                               layers = 10:11,
+#'                               aggregation_from_layers_to_tokens = "concatenate",
+#'                               aggregation_from_tokens_to_texts = "mean",
+#'                               aggregation_from_tokens_to_word_types = "mean"
+#' )
+#'
+#' # Show information about how the embeddings were constructed.
+#' comment(word_embeddings$texts$satisfactiontexts)
+#' comment(word_embeddings$word_types)
+#' comment(word_embeddings$tokens$satisfactiontexts)
+#'
+#' # See how the word embeddings are structured.
+#' word_embeddings
+#'
+#' # Save the word embeddings to avoid having to embed the text again.
+#' saveRDS(word_embeddings, "word_embeddings.rds")
+#'
+#' # Retrieve the saved word embeddings.
+#' word_embeddings <- readRDS("word_embeddings.rds")
 #' }
-#' @seealso see \code{\link{textEmbedLayerAggregation}}, \code{\link{textEmbedRawLayers}} and
-#' \code{\link{textDimName}}
+#'
+#' @seealso See \code{\link{textEmbedLayerAggregation}}, \code{\link{textEmbedRawLayers}} and
+#' \code{\link{textDimName}}.
 #' @importFrom reticulate source_python
 #' @export
 textEmbed <- function(texts,
@@ -883,7 +1016,10 @@ textEmbed <- function(texts,
                       device = "cpu",
                       logging_level = "error",
                       ...) {
-
+  
+  if (sum(is.na(texts) > 0)){
+    warning("texts contain NA-values.")
+  }
 
   T1_textEmbed <- Sys.time()
 
@@ -901,7 +1037,7 @@ textEmbed <- function(texts,
       colourise("When using decontextualize = TRUE, it is required to set aggregation_from_tokens_to_texts,
                 aggregation_from_tokens_to_word_types as well as aggregation_from_tokens_to_word_types",
                 fg = "red"),
-      colourise("This is because both the token ambeddings and text embeddings are constrcuted from the word type embeddings.",
+      colourise("This is because both the token embeddings and text embeddings are constrcuted from the word type embeddings.",
                 fg = "green")
     ))
   }
@@ -913,6 +1049,12 @@ textEmbed <- function(texts,
     layers
   }
 
+  # Select all character variables and make them UTF-8 coded (e.g., BERT wants it that way).
+  data_character_variables <- select_character_v_utf8(texts)
+  outcome_list <- list()
+  #text_i=1
+  for (text_i in 1:ncol(data_character_variables)) {
+    texts <-   data_character_variables[text_i]
   # Get hidden states/layers for output 1 and/or output 2 or decontextualsied;
   if (!is.null(aggregation_from_layers_to_tokens) |
     !is.null(aggregation_from_tokens_to_texts) |
@@ -932,7 +1074,13 @@ textEmbed <- function(texts,
       ...
     )
   }
-
+    
+  # Generate placement vectors if there are NA:s in texts. 
+  if (sum(is.na(texts) > 0)){
+    all_wanted_layers <- generate_placement_vector(raw_layers = all_wanted_layers, 
+                                                   texts = texts)
+  }
+    
   if (!decontextualize) {
     # 1. Get token-level embeddings with aggregated levels
     if (!is.null(aggregation_from_layers_to_tokens) & keep_token_embeddings) {
@@ -1008,6 +1156,9 @@ textEmbed <- function(texts,
       " ; aggregation_from_tokens_to_word_types = ", aggregation_from_tokens_to_word_types,
       " ; decontextualize = ", decontextualize
     )
+
+    individual_word_embeddings_words <- list(individual_word_embeddings_words)
+    names(individual_word_embeddings_words) <- colnames(texts)
     output$word_types <- individual_word_embeddings_words
     cat(colourise("Done! \n", "purple"))
   }
@@ -1033,7 +1184,7 @@ textEmbed <- function(texts,
         text_tokens <- lapply(texts[[i_variables]], textTokenize,
                               model = model, max_token_to_sentence = max_token_to_sentence) # , ...
 
-        t_embeddings <- lapply(text_tokens, applysemrep_over_words, decontext_space, tolower = FALSE)
+        t_embeddings <- lapply(text_tokens, applysemrep_over_words, decontext_space[[1]], tolower = FALSE)
 
         token_embeddings <- mapply(dplyr::bind_cols, text_tokens, t_embeddings, SIMPLIFY = FALSE)
 
@@ -1082,7 +1233,16 @@ textEmbed <- function(texts,
     sep = "",
     collapse = " "
   )
-  return(output)
+  outcome_list[[text_i]] <- output
+  }
+
+  if(ncol(data_character_variables) > 1){
+    output1 <- Reduce(modifyList, outcome_list)
+  } else {
+    output1 <- outcome_list[[1]]
+  }
+
+  return(output1)
 }
 
 
@@ -1159,4 +1319,3 @@ textDimName <- function(word_embeddings,
 
   return(word_embeddings)
 }
-

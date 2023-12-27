@@ -2,11 +2,28 @@
 
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# text 1.1.03
+- `textFineTuneTask()` and `textFineTuneDomain()` removes problematic characters. 
+
+# text 1.1.02
+- `textFineTuneDomain()` is implemented as experimental
+- `textTrainN()` and `textTrainNPlot()` are implemented as experimental
+- `textPredict()` has the option to download models (experimental)
+
+# text 1.1
+## Functions
+- `textEmbed()` is now fully embedding one column at the time; and reducing word_types for each column. This can break some code; and produc different results in plots where word_types and based on several embedded columns.
+- `textTrainN()` and `textTrainNPlot()` evaluates prediction accuracy across number of cases. 
+- `textTrainRegression()` and `textTrainRandomForest` now takes tibble as input in strata. 
+
+
 # text 1.0
 ## Function
 - multinomial regression in `textTrainRegression()`
 - `textPredictTest()` can handle `auc`
 - `textEmbed()` is faster (thanks to faster handling of aggregating layers)
+- Added `sort` parameter in `textEmbedRawLayers()`. 
 
 ## Bug/unexpected behaviour
 - Tests using training with random forest was updated since outcomes changed when updating from R 4.2 to R 4.3.1. (see test_2_textTrain.R in tests/testthat folder) 
