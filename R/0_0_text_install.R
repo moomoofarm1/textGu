@@ -56,24 +56,48 @@ textrpp_install <- function(conda = "auto",
   # Set system specific default versions
   if (rpp_version[[1]] == "rpp_version_system_specific_defaults") {
     if (is_osx() | is_linux()) {
-      rpp_version <- c("torch==2.0.0",
-                       "transformers==4.36.0",
-                       "numpy==1.25.2",
+      rpp_version <- c("numpy==1.25.2",
+                       "sympy==1.12.0",
+                       "protobuf=4.24.2", 
+                       "scipy==1.11.3",
+                       "nltk==3.8.1",
                        "pandas==2.0.3",
-                       "nltk==3.6.7",
-                       "scikit-learn==1.3.0",
-                       "datasets==2.9.0",
-                       "evaluate==0.4.0")
+                       "pyarrow==12.0.1",
+                       "scikit-learn==1.3.1",
+                       "torch==2.0.1",
+                       "torchvision==0.15.2",
+                       "tokenizer==0.13.1"
+                       "transformers==4.35.2",
+                       "datasets==2.14.15",
+                       "accelerate==0.20.3",
+                       "evaluate==0.4.0",
+                       "accelerate==0.20.3",
+                       "flair==0.13.0",
+                       "gensim==4.3.2",
+                       "hdbscan==0.8.33",
+                       "bertopic==0.15.0")
     }
     if (is_windows()) {
-      rpp_version <- c("torch==2.0.0",
-                       "transformers==4.36.0",
-                       "numpy==1.25.2",
+      rpp_version <- c("numpy==1.25.2",
+                       "sympy==1.12.0",
+                       "protobuf=4.24.2", 
+                       "scipy==1.11.3",
+                       "nltk==3.8.1",
                        "pandas==2.0.3",
-                       "nltk==3.6.7",
-                       "scikit-learn==1.3.0",
-                       "datasets==2.9.0",
-                       "evaluate==0.4.0")
+                       "pyarrow==12.0.1",
+                       "scikit-learn==1.3.1",
+                       "torch==2.0.1",
+                       "torchvision==0.15.2",
+                       "tokenizer==0.13.1"
+                       "transformers==4.35.2",
+                       "datasets==2.14.15",
+                       "accelerate==0.20.3",
+                       "evaluate==0.4.0",
+                       "accelerate==0.20.3",
+                       "flair==0.13.0",
+                       "gensim==4.3.2",
+                       "hdbscan==0.8.33",
+                       "bertopic==0.15.0")
     }
   }
 
