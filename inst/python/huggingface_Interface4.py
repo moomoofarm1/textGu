@@ -11,7 +11,7 @@ def set_tokenizer_parallelism(tokenizer_parallelism):
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-def dataFrame_encoding(df, coder1 = 'latin1'):
+def dataFrame_encoding(df, coder1 = 'utf-8'):
     """
     Transform the encoding of string columns into a specific coding.
 
@@ -20,7 +20,7 @@ def dataFrame_encoding(df, coder1 = 'latin1'):
     df : pandas dataframe
         The input for recoding
     coder1 : str
-        Coder to recoding with a default of "latin1" #"utf-8"
+        Coder to recoding with a default of "utf-8" #"latin1"
 
     Returns:
     ----------
