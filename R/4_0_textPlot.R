@@ -993,16 +993,22 @@ textPlot <- function(word_data,
 
   # Select plot_n_word_extreme and Select plot_n_word_frequency
   word_data1_extrem_max_x <- word_data1 %>%
-    dplyr::arrange(-x_plotted) %>%
-    dplyr::slice(0:plot_n_word_extreme)
+    dplyr::group_by(square_categories) %>%  # Group by square_categories
+    dplyr::arrange(-abs(x_plotted)) %>%
+    dplyr::slice(0:plot_n_word_extreme) %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(!is.na(square_categories)) %>%  # Filter out NA values in square_categories
+    dplyr::filter(square_categories != 5)
 
-  word_data1_extrem_min_x <- word_data1 %>%
-    dplyr::arrange(x_plotted) %>%
-    dplyr::slice(0:plot_n_word_extreme)
+  word_data1_extrem_min_x <- word_data1_extrem_max_x
 
   word_data1_frequency_x <- word_data1 %>%
+    dplyr::group_by(square_categories) %>%  # Group by square_categories
     dplyr::arrange(-n) %>%
-    dplyr::slice(0:plot_n_word_frequency)
+    dplyr::slice(0:plot_n_word_frequency) %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(!is.na(square_categories)) %>%  # Filter out NA values in square_categories
+    dplyr::filter(square_categories != 5)
 
   # Select the middle range, order according to frequency and then select the plot_n_words_middle = 5
   mean_m_sd_x <- mean(word_data1$x_plotted, na.rm = TRUE) - (sd(word_data1$x_plotted, na.rm = TRUE) / 10)
@@ -1050,16 +1056,16 @@ textPlot <- function(word_data,
 
     # Select plot_n_word_extreme and Select plot_n_word_frequency
     word_data1_extrem_max_y <- word_data1 %>%
-      dplyr::arrange(-y_plotted) %>%
-      dplyr::slice(0:plot_n_word_extreme)
+      dplyr::group_by(square_categories) %>%  # Group by square_categories
+      dplyr::arrange(-abs(y_plotted)) %>%
+      dplyr::slice(0:plot_n_word_extreme) %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(!is.na(square_categories)) %>%  # Filter out NA values in square_categories
+      dplyr::filter(square_categories != 5)
 
-    word_data1_extrem_min_y <- word_data1 %>%
-      dplyr::arrange(y_plotted) %>%
-      dplyr::slice(0:plot_n_word_extreme)
+    word_data1_extrem_min_y <- word_data1_extrem_max_y
 
-    word_data1_frequency_y <- word_data1 %>%
-      dplyr::arrange(-n) %>%
-      dplyr::slice(0:plot_n_word_frequency)
+    word_data1_frequency_y <- word_data1_frequency_x
 
     # Select the middle range, order according to frequency and then select the plot_n_words_middle =5
     mean_m_sd_y <- mean(word_data1$y_plotted, na.rm = TRUE) - (sd(word_data1$y_plotted, na.rm = TRUE) / 10)
