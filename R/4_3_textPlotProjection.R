@@ -601,12 +601,12 @@ textProjection <- function(words,
 #' the x-axes and y-axes, (where duplicates are removed); selects first according to lowest p-value
 #' and then according to frequency. Hence, on a two dimensional plot it is possible that
 #' plot_n_words_p = 1 yield 4 words.
-#' @param plot_n_word_extreme Number of words that are extreme on Supervised Dimension Projection per dimension.
+#' @param plot_n_word_extreme Number of words that are extreme on Supervised Dimension Projection per square.
 #' (i.e., even if not significant; per dimensions, where duplicates are removed).
-#' @param plot_n_word_frequency Number of words based on being most frequent.
+#' @param plot_n_word_frequency Number of words based on being most frequent per square.
 #' (i.e., even if not significant).
-#' @param plot_n_words_middle Number of words plotted that are in the middle in Supervised
-#' Dimension Projection score (i.e., even if not significant;  per dimensions, where duplicates are removed).
+#' @param plot_n_words_middle Number of words plotted that are in the middle square in Supervised
+#' Dimension Projection score (i.e., even if not significant; duplicates are removed).
 #' @param title_top Title (default "  ")
 #' @param titles_color Color for all the titles (default: "#61605e")
 # @param x_axes If TRUE, plotting on the x_axes.
