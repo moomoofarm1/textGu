@@ -1,3 +1,4 @@
+print("\033[31m===============Python code check 111 is here!===============\033[0m\n")
 #note: I think layer 0 is the input embedding.
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -21,6 +22,7 @@ except:
 from nltk.tokenize import sent_tokenize
 
 import os, sys
+print("\033[31m===============Python code check 222 is here!===============\033[0m\n")
 
 ACCEPTED_TASKS = ["text-classification", "sentiment-analysis", "question-answering", "translation", 
     "summarization", "token-classification", "ner", "text-generation", "zero-shot-classification"]
