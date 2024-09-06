@@ -52,13 +52,15 @@ textrpp_initialize <- function(python_executable = NULL,
       reticulate::use_condaenv(settings$val, required = TRUE)
     }
   }
-  
+
+  cat("\033[31m===============R code check 111 is here!===============\033[0m\n")
   # Importing this here may start importing necessary packages
   reticulate::source_python(system.file("python",
     "huggingface_Interface3.py",
     package = "text",
     mustWork = TRUE
   ))
+  cat("\033[31m===============R code check 222 is here!===============\033[0m\n")
 
   message(colourise(
     "\nSuccessfully initialized text required python packages.\n",
