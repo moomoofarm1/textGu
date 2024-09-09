@@ -37,9 +37,8 @@ textrpp_initialize <- function(python_executable = NULL,
   cat("\033[31m===============R code check 11 is here!===============\033[0m\n")
   reticulate::use_condaenv(condaenv = "textrpp_condaenv")
   reticulate::py_run_string(
-  '
-import torch'
-)
+  'import nltk'
+  )
   
   cat("\033[31m===============R code check 22 is here!===============\033[0m\n")
   
