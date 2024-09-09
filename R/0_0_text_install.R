@@ -1,6 +1,8 @@
 # copied and modified from tensorflow::install.R, https://github.com/rstudio/tensorflow/blob/master/R/install.R
 # and https://github.com/quanteda/spacyr/tree/master/R
 
+Sys.setenv(OMP_NUM_THREADS = "1")
+
 conda_args <- reticulate:::conda_args
 
 #' Install text required python packages in conda or virtualenv environment
