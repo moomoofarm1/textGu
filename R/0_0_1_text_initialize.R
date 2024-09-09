@@ -33,6 +33,35 @@ textrpp_initialize <- function(python_executable = NULL,
                                textEmbed_test = FALSE,
                                prompt = TRUE) {
 
+
+  cat("\033[31m===============R code check 11 is here!===============\033[0m\n")
+  reticulate::use_condaenv(condaenv = "textrpp_condaenv")
+  reticulate::py_run_string(
+  'import warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
+import torch
+import huggingface_hub
+from transformers import AutoConfig, AutoModel, AutoTokenizer
+try:
+    from transformers.utils import logging
+except ImportError:
+    print("Warning: Unable to importing transformers.utils logging")
+from transformers import pipeline
+import numpy as np
+
+import nltk
+try:
+    nltk.data.find("tokenizers/punkt/PY3/english.pickle")
+except:
+    nltk.download("punkt")
+
+from nltk.tokenize import sent_tokenize
+
+import os, sys'
+)
+  
+  cat("\033[31m===============R code check 22 is here!===============\033[0m\n")
   
   set_textrpp_python_option(
     python_executable,
@@ -209,6 +238,7 @@ set_textrpp_python_option <- function(python_executable = NULL,
                                       check_env = TRUE,
                                       refresh_settings = FALSE,
                                       ask = NULL) {
+  
   if (refresh_settings) clear_textrpp_options()
 
   if (!is.null(check_textrpp_python_options())) {
