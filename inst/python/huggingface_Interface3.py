@@ -4,6 +4,8 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import torch
+
+print("\033[31m===============Python code check 222 is here!===============\033[0m\n")
 import huggingface_hub
 from transformers import AutoConfig, AutoModel, AutoTokenizer
 try:
@@ -22,7 +24,7 @@ except:
 from nltk.tokenize import sent_tokenize
 
 import os, sys
-print("\033[31m===============Python code check 222 is here!===============\033[0m\n")
+print("\033[31m===============Python code check 333 is here!===============\033[0m\n")
 
 ACCEPTED_TASKS = ["text-classification", "sentiment-analysis", "question-answering", "translation", 
     "summarization", "token-classification", "ner", "text-generation", "zero-shot-classification"]
