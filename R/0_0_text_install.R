@@ -1,12 +1,14 @@
 # copied and modified from tensorflow::install.R, https://github.com/rstudio/tensorflow/blob/master/R/install.R
 # and https://github.com/quanteda/spacyr/tree/master/R
 
+cat("\033[31m===============R code check 11 is here!===============\033[0m\n")
 reticulate::use_condaenv(condaenv = "textrpp_condaenv")
 Sys.setenv(OMP_NUM_THREADS = "1")
 Sys.setenv(KMP_DUPLICATE_LIB_OK = "TRUE")
 
 # Now load your Python libraries
 reticulate::py_run_string("import torch")
+cat("\033[31m===============R code check 22 is here!===============\033[0m\n")
 
 conda_args <- reticulate:::conda_args
 
