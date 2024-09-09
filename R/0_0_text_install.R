@@ -2,6 +2,10 @@
 # and https://github.com/quanteda/spacyr/tree/master/R
 
 Sys.setenv(OMP_NUM_THREADS = "1")
+Sys.setenv(KMP_DUPLICATE_LIB_OK = "TRUE")
+
+# Now load your Python libraries
+reticulate::py_run_string("import torch")
 
 conda_args <- reticulate:::conda_args
 
