@@ -1,6 +1,7 @@
 # copied and modified from tensorflow::install.R, https://github.com/rstudio/tensorflow/blob/master/R/install.R
 # and https://github.com/quanteda/spacyr/tree/master/R
 
+reticulate::use_condaenv(condaenv = "textrpp_condaenv")
 Sys.setenv(OMP_NUM_THREADS = "1")
 Sys.setenv(KMP_DUPLICATE_LIB_OK = "TRUE")
 
